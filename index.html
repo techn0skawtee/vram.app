@@ -366,6 +366,9 @@
 
                 // Use HuggingFace gguf parser for metadata via range requests
                 const cleanUrl = url.replace('/blob/', '/resolve/');
+
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`;
+                
                 const { metadata } = await gguf(url);
                 
                 // Extract dimensions with fallbacks to defaults if keys are non-standard
