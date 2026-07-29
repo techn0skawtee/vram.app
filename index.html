@@ -136,13 +136,30 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-400 mb-1.5">Pre-set Model / Fallback</label>
-                        <select id="preset-model" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 appearance-none cursor-pointer">
-                            <option value="5" data-layers="32" data-kvheads="8" data-headdim="128">Llama 3 8B (Q4_K_M) - ~5 GB</option>
-                            <option value="9" data-layers="40" data-kvheads="8" data-headdim="128">Qwen 1.5 14B (Q4_K_M) - ~9 GB</option>
-                            <option value="20" data-layers="64" data-kvheads="8" data-headdim="128">Mixtral 8x7B (Q4_K_M) - ~26 GB</option>
-                            <option value="40" data-layers="80" data-kvheads="8" data-headdim="128">Llama 3 70B (Q4_K_M) - ~40 GB</option>
-                            <option value="70" data-layers="32" data-kvheads="8" data-headdim="128">Grok-1 / Large MoE - ~70 GB</option>
-                        </select>
+                       <select id="preset-model" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 appearance-none cursor-pointer">
+    <!-- Small / Lightweight Models (3B - 4B) -->
+    <option value="2" data-layers="28" data-kvheads="8" data-headdim="128">Llama 3.2 3B (Q4_K_M) - ~2 GB</option>
+    <option value="2.5" data-layers="36" data-kvheads="2" data-headdim="128">Qwen 2.5 3B (Q4_K_M) - ~2.5 GB</option>
+
+    <!-- Popular Mid-Sized Models (7B - 14B) -->
+    <option value="5" data-layers="32" data-kvheads="8" data-headdim="128" selected>Llama 3.1 / 3 8B (Q4_K_M) - ~5 GB</option>
+    <option value="4.8" data-layers="28" data-kvheads="4" data-headdim="128">Qwen 2.5 7B (Q4_K_M) - ~4.8 GB</option>
+    <option value="5.8" data-layers="42" data-kvheads="8" data-headdim="256">Gemma 2 9B (Q4_K_M) - ~5.8 GB</option>
+    <option value="9" data-layers="48" data-kvheads="8" data-headdim="128">Qwen 2.5 14B (Q4_K_M) - ~9 GB</option>
+
+    <!-- Large / Mid-Enterprise Models (27B - 35B) -->
+    <option value="17" data-layers="46" data-kvheads="16" data-headdim="128">Gemma 2 27B (Q4_K_M) - ~17 GB</option>
+    <option value="20" data-layers="64" data-kvheads="8" data-headdim="128">Qwen 2.5 32B (Q4_K_M) - ~20 GB</option>
+    <option value="26" data-layers="64" data-kvheads="8" data-headdim="128">Mixtral 8x7B (Q4_K_M) - ~26 GB</option>
+
+    <!-- Flagship Models (70B - 72B) -->
+    <option value="42" data-layers="80" data-kvheads="8" data-headdim="128">Llama 3.1 70B (Q4_K_M) - ~42 GB</option>
+    <option value="44" data-layers="80" data-kvheads="8" data-headdim="128">Qwen 2.5 72B (Q4_K_M) - ~44 GB</option>
+
+    <!-- High-Capacity / MoE Models -->
+    <option value="70" data-layers="32" data-kvheads="8" data-headdim="128">Grok-1 / Large MoE - ~70 GB</option>
+    <option value="240" data-layers="126" data-kvheads="8" data-headdim="128">Llama 3.1 405B (Q4_K_M) - ~240 GB</option>
+</select>
                     </div>
                 </div>
             </div>
