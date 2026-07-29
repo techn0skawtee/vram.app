@@ -365,6 +365,7 @@
                 } catch(e) { console.warn("Could not fetch HEAD for file size, using defaults."); }
 
                 // Use HuggingFace gguf parser for metadata via range requests
+                const cleanUrl = url.replace('/blob/', '/resolve/');
                 const { metadata } = await gguf(url);
                 
                 // Extract dimensions with fallbacks to defaults if keys are non-standard
