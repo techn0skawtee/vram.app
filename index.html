@@ -154,20 +154,41 @@
                 </h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-1.5">GPU Hardware</label>
-                        <select id="gpu-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 cursor-pointer">
-                            <option value="12" data-bw="360">RTX 3060 12GB (360 GB/s)</option>
-                            <option value="10" data-bw="760">RTX 3080 10GB (760 GB/s)</option>
-                            <option value="12" data-bw="912">RTX 3080 Ti 12GB (912 GB/s)</option>
-                            <option value="24" data-bw="936" selected>RTX 3090 24GB (936 GB/s)</option>
-                            <option value="24" data-bw="1008">RTX 4090 24GB (1008 GB/s)</option>
-                            <option value="48" data-bw="936">2x RTX 3090 48GB (936 GB/s)</option>
-                            <option value="36" data-bw="400">Apple M3 Max 36GB (400 GB/s)</option>
-                            <option value="64" data-bw="400">Apple M3 Max 64GB (400 GB/s)</option>
-                            <option value="128" data-bw="400">Apple M3 Max 128GB (400 GB/s)</option>
-                        </select>
-                    </div>
+                   <div>
+    <label class="block text-sm font-medium text-slate-400 mb-1.5">GPU Hardware</label>
+    <select id="gpu-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 cursor-pointer">
+        <!-- RTX 50 Series (Blackwell) -->
+        <option value="32" data-bw="1792">RTX 5090 32GB (1792 GB/s)</option> <!-- -->
+        <option value="16" data-bw="960">RTX 5080 16GB (960 GB/s)</option> <!-- -->
+        <option value="16" data-bw="896">RTX 5070 Ti 16GB (896 GB/s)</option>
+        <option value="12" data-bw="672">RTX 5070 12GB (672 GB/s)</option>
+
+        <!-- RTX 40 Series -->
+        <option value="24" data-bw="1008">RTX 4090 24GB (1008 GB/s)</option>
+        <option value="16" data-bw="736">RTX 4080 Super 16GB (736 GB/s)</option>
+        <option value="16" data-bw="672">RTX 4070 Ti Super 16GB (672 GB/s)</option>
+        <option value="12" data-bw="504">RTX 4070 Super 12GB (504 GB/s)</option>
+        <option value="16" data-bw="288">RTX 4060 Ti 16GB (288 GB/s)</option>
+
+        <!-- RTX 30 Series & Mods -->
+        <option value="24" data-bw="936" selected>RTX 3090 24GB (936 GB/s)</option>
+        <option value="12" data-bw="912">RTX 3080 Ti 12GB (912 GB/s)</option>
+        <option value="20" data-bw="760">RTX 3080 20GB Mod (760 GB/s)</option>
+        <option value="10" data-bw="760">RTX 3080 10GB (760 GB/s)</option>
+        <option value="12" data-bw="360">RTX 3060 12GB (360 GB/s)</option>
+
+        <!-- Multi-GPU Rig Options -->
+        <option value="48" data-bw="936">2x RTX 3090 48GB (936 GB/s)</option>
+        <option value="48" data-bw="1008">2x RTX 4090 48GB (1008 GB/s)</option>
+        <option value="64" data-bw="1792">2x RTX 5090 64GB (1792 GB/s)</option>
+
+        <!-- Apple Silicon Unified Memory -->
+        <option value="36" data-bw="400">Apple M3/M4 Max 36GB (400 GB/s)</option>
+        <option value="64" data-bw="400">Apple M3/M4 Max 64GB (400 GB/s)</option>
+        <option value="128" data-bw="400">Apple M3/M4 Max 128GB (400 GB/s)</option>
+        <option value="192" data-bw="800">Apple M2/M3 Ultra 192GB (800 GB/s)</option>
+    </select>
+</div>
                     <div>
                         <label class="block text-sm font-medium text-slate-400 mb-1.5">Host Application (Overhead)</label>
                         <select id="runner-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 cursor-pointer">
