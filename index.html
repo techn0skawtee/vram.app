@@ -394,9 +394,11 @@
                     lucide.createIcons();
                 }, 2000);
 
-            } catch (error) {
-                console.error("GGUF Parse Error:", error);
-                alert("Failed to parse GGUF URL. CORS might be blocking the request, or the file is invalid. Falling back to preset models.");
+           } catch (error) {
+                console.warn("GGUF Parse Error (Hugging Face CORS restriction):", error);
+                
+                alert("Hugging Face prevented direct browser header parsing for this file (CORS Redirect Restriction).\n\nPlease select the closest model size from the 'Pre-set Model / Fallback' dropdown to calculate your VRAM!");
+                
                 DOM.btnParse.innerHTML = `<i data-lucide="search" class="w-4 h-4"></i> Parse`;
                 lucide.createIcons();
             }
