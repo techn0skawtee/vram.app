@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vram.app - GGUF Memory & Speed Estimator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                        mono: ['Fira Code', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        /* Custom Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #06b6d4;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 3px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+        }
+        
+        .panel-glow {
+            box-shadow: 0 0 30px rgba(15, 23, 42, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 selection:bg-cyan-900 selection:text-cyan-50">
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between mb-8 pb-6 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+            <i data-lucide="cpu" class="w-8 h-8 text-cyan-400"></i>
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 glow-text">
+                    Vram.app
+                </h1>
+            </div>
+        </div>
+        <div class="mt-4 md:mt-0 flex items-center bg-slate-800/50 border border-slate-700 rounded-full px-4 py-1.5 shadow-inner">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 mr-2 shadow-[0_0_8px_#22d3ee]"></span>
+            <span class="text-sm font-medium text-slate-300">GGUF Memory & Speed Estimator</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Inputs (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Model Source Panel -->
+            <div class="bg-slate-850 rounded-xl border border-slate-700/60 p-5 panel-glow">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="database" class="w-5 h-5 text-slate-400"></i> Model Configuration
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">Hugging Face GGUF URL (Optional)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="gguf-url" placeholder="https://huggingface.co/User/Repo/resolve/main/model-q4_k_m.gguf" 
+                                class="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none text-slate-200 placeholder-slate-600 transition-colors">
+                            <button id="btn-parse" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-slate-600">
+                                <i data-lucide="search" class="w-4 h-4"></i> Parse
+                            </button>
+                        </div>
+                        <p id="parse-status" class="text-xs text-slate-500 mt-1.5 hidden"></p>
+                    </div>
+
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                            <div class="w-full border-t border-slate-700"></div>
+                        </div>
+                        <div class="relative flex justify-center">
+                            <span class="px-3 bg-slate-850 text-xs font-medium text-slate-500 uppercase tracking-wider">OR SELECT PRESET</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">Pre-set Model / Fallback</label>
+                        <select id="preset-model" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 appearance-none cursor-pointer">
+                            <option value="5" data-layers="32" data-kvheads="8" data-headdim="128">Llama 3 8B (Q4_K_M) - ~5 GB</option>
+                            <option value="9" data-layers="40" data-kvheads="8" data-headdim="128">Qwen 1.5 14B (Q4_K_M) - ~9 GB</option>
+                            <option value="20" data-layers="64" data-kvheads="8" data-headdim="128">Mixtral 8x7B (Q4_K_M) - ~26 GB</option>
+                            <option value="40" data-layers="80" data-kvheads="8" data-headdim="128">Llama 3 70B (Q4_K_M) - ~40 GB</option>
+                            <option value="70" data-layers="32" data-kvheads="8" data-headdim="128">Grok-1 / Large MoE - ~70 GB</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hardware & Runner Panel -->
+            <div class="bg-slate-850 rounded-xl border border-slate-700/60 p-5 panel-glow">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="server" class="w-5 h-5 text-slate-400"></i> Hardware & Environment
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">GPU Hardware</label>
+                        <select id="gpu-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 cursor-pointer">
+                            <option value="12" data-bw="360">RTX 3060 12GB (360 GB/s)</option>
+                            <option value="10" data-bw="760">RTX 3080 10GB (760 GB/s)</option>
+                            <option value="12" data-bw="912">RTX 3080 Ti 12GB (912 GB/s)</option>
+                            <option value="24" data-bw="936" selected>RTX 3090 24GB (936 GB/s)</option>
+                            <option value="24" data-bw="1008">RTX 4090 24GB (1008 GB/s)</option>
+                            <option value="48" data-bw="936">2x RTX 3090 48GB (936 GB/s)</option>
+                            <option value="36" data-bw="400">Apple M3 Max 36GB (400 GB/s)</option>
+                            <option value="64" data-bw="400">Apple M3 Max 64GB (400 GB/s)</option>
+                            <option value="128" data-bw="400">Apple M3 Max 128GB (400 GB/s)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">Host Application (Overhead)</label>
+                        <select id="runner-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 cursor-pointer">
+                            <option value="0.5">llama.cpp (Pure CLI)</option>
+                            <option value="0.75" selected>Ollama</option>
+                            <option value="1.1">LM Studio</option>
+                            <option value="1.5">vLLM</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Context & KV Cache Panel -->
+            <div class="bg-slate-850 rounded-xl border border-slate-700/60 p-5 panel-glow">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="layers" class="w-5 h-5 text-slate-400"></i> Context & Memory Settings
+                </h2>
+                
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="block text-sm font-medium text-slate-400">Context Length (Tokens)</label>
+                            <span id="context-display" class="text-sm font-mono text-cyan-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-700">8192</span>
+                        </div>
+                        <input type="range" id="context-slider" min="4096" max="131072" step="4096" value="8192" class="w-full mt-2">
+                        <div class="flex justify-between text-xs text-slate-500 mt-1.5 font-mono">
+                            <span>4k</span>
+                            <span>32k</span>
+                            <span>64k</span>
+                            <span>128k</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1.5">KV Cache Precision</label>
+                        <select id="kv-cache-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200 cursor-pointer">
+                            <option value="2" selected>FP16 (Standard - 2 bytes)</option>
+                            <option value="1">FP8 (Optimized - 1 byte)</option>
+                            <option value="0.5">Q4_0 (Aggressive - 0.5 bytes)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Outputs (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- VRAM Dashboard -->
+            <div class="bg-slate-850 rounded-xl border border-slate-700/60 p-6 panel-glow sticky top-6">
+                <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-6 h-6 text-cyan-400"></i> Calculation Results
+                </h2>
+
+                <!-- Status Badge -->
+                <div class="mb-6 flex justify-center">
+                    <div id="status-badge" class="px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 border shadow-lg transition-all duration-300 bg-green-500/10 text-green-400 border-green-500/30">
+                        <div class="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
+                        <span>100% GPU VRAM Fit</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm mb-2 font-mono">
+                        <span class="text-slate-400">VRAM Usage</span>
+                        <span id="vram-text-display" class="font-semibold text-slate-200">0.00 / 24.00 GB</span>
+                    </div>
+                    <div class="h-4 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-700">
+                        <div id="vram-bar" class="h-full bg-green-500 transition-all duration-500 ease-out" style="width: 50%;"></div>
+                    </div>
+                    <div class="text-right text-xs text-slate-500 mt-1 font-mono" id="vram-percentage">50.0%</div>
+                </div>
+
+                <!-- Detail Rows -->
+                <div class="space-y-3 border-t border-slate-700 pt-5 mb-6">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400 flex items-center gap-2"><i data-lucide="box" class="w-4 h-4"></i> Weight VRAM</span>
+                        <span id="out-weight" class="font-mono text-slate-200">0.00 GB</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> KV Cache</span>
+                        <span id="out-kv" class="font-mono text-slate-200">0.00 GB</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400 flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4"></i> Host Overhead</span>
+                        <span id="out-overhead" class="font-mono text-slate-200">0.00 GB</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-700/50 flex justify-between items-center font-semibold">
+                        <span class="text-slate-300">Total Required</span>
+                        <span id="out-total" class="font-mono text-cyan-400 text-lg glow-text">0.00 GB</span>
+                    </div>
+                </div>
+
+                <!-- Speed Estimation -->
+                <div class="bg-slate-900 rounded-lg p-4 border border-slate-700">
+                    <div class="text-xs text-slate-400 uppercase tracking-wider mb-1 font-semibold flex items-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i> Estimated Decode Speed
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="out-speed" class="text-4xl font-bold text-white tracking-tight">0.0</span>
+                        <span class="text-slate-400 font-medium">tokens / sec</span>
+                    </div>
+                    <p id="speed-warning" class="text-xs text-yellow-500 mt-2 hidden">
+                        <i data-lucide="alert-triangle" class="w-3 h-3 inline"></i> 70% penalty applied due to PCIe/System RAM bottleneck.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Application Logic -->
+    <script type="module">
+        import { gguf } from 'https://cdn.jsdelivr.net/npm/@huggingface/gguf@0.1.5/+esm';
+
+        // Initialize Icons
+        lucide.createIcons();
+
+        // DOM Elements
+        const DOM = {
+            urlInput: document.getElementById('gguf-url'),
+            btnParse: document.getElementById('btn-parse'),
+            parseStatus: document.getElementById('parseStatus'),
+            presetModel: document.getElementById('preset-model'),
+            gpuSelect: document.getElementById('gpu-select'),
+            runnerSelect: document.getElementById('runner-select'),
+            contextSlider: document.getElementById('context-slider'),
+            contextDisplay: document.getElementById('context-display'),
+            kvCacheSelect: document.getElementById('kv-cache-select'),
+            
+            // Outputs
+            statusBadge: document.getElementById('status-badge'),
+            vramTextDisplay: document.getElementById('vram-text-display'),
+            vramBar: document.getElementById('vram-bar'),
+            vramPercentage: document.getElementById('vram-percentage'),
+            outWeight: document.getElementById('out-weight'),
+            outKv: document.getElementById('out-kv'),
+            outOverhead: document.getElementById('out-overhead'),
+            outTotal: document.getElementById('out-total'),
+            outSpeed: document.getElementById('out-speed'),
+            speedWarning: document.getElementById('speed-warning')
+        };
+
+        // State
+        let modelState = {
+            fileSizeGB: 5.0,
+            layers: 32,
+            kvHeads: 8,
+            headDim: 128,
+            isCustomParsed: false
+        };
+
+        // Event Listeners for reactivity
+        DOM.presetModel.addEventListener('change', () => {
+            if (DOM.presetModel.value) {
+                const selected = DOM.presetModel.options[DOM.presetModel.selectedIndex];
+                modelState.fileSizeGB = parseFloat(DOM.presetModel.value);
+                modelState.layers = parseInt(selected.dataset.layers);
+                modelState.kvHeads = parseInt(selected.dataset.kvheads);
+                modelState.headDim = parseInt(selected.dataset.headdim);
+                modelState.isCustomParsed = false;
+                DOM.urlInput.value = ''; // clear url if preset selected
+                calculate();
+            }
+        });
+
+        DOM.gpuSelect.addEventListener('change', calculate);
+        DOM.runnerSelect.addEventListener('change', calculate);
+        
+        DOM.contextSlider.addEventListener('input', (e) => {
+            DOM.contextDisplay.textContent = parseInt(e.target.value).toLocaleString();
+            calculate();
+        });
+        
+        DOM.kvCacheSelect.addEventListener('change', calculate);
+
+        // Fetch GGUF Header Logic
+        DOM.btnParse.addEventListener('click', async () => {
+            const url = DOM.urlInput.value.trim();
+            if (!url) return;
+            
+            const originalIcon = DOM.btnParse.innerHTML;
+            DOM.btnParse.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 spinner"></i> Parsing...`;
+            lucide.createIcons();
+            
+            try {
+                // Determine file size from content-length if possible
+                let sizeGB = 5.0; // fallback
+                try {
+                    const headRes = await fetch(url, { method: 'HEAD' });
+                    const bytes = headRes.headers.get('content-length');
+                    if (bytes) sizeGB = parseInt(bytes) / (1024 ** 3);
+                } catch(e) { console.warn("Could not fetch HEAD for file size, using defaults."); }
+
+                // Use HuggingFace gguf parser for metadata via range requests
+                const { metadata } = await gguf(url);
+                
+                // Extract dimensions with fallbacks to defaults if keys are non-standard
+                const layers = Number(metadata.llama?.block_count || metadata.qwen2?.block_count || 32);
+                const kvHeads = Number(metadata.llama?.attention?.head_count_kv || metadata.qwen2?.attention?.head_count_kv || 8);
+                const headDim = Number(metadata.llama?.attention?.head_length || 128); // Standard for most
+
+                modelState = {
+                    fileSizeGB: sizeGB,
+                    layers: layers,
+                    kvHeads: kvHeads,
+                    headDim: headDim,
+                    isCustomParsed: true
+                };
+                
+                DOM.presetModel.value = ""; // Deselect preset
+                calculate();
+
+                // Show success
+                DOM.btnParse.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-green-400"></i> Done`;
+                setTimeout(() => {
+                    DOM.btnParse.innerHTML = `<i data-lucide="search" class="w-4 h-4"></i> Parse`;
+                    lucide.createIcons();
+                }, 2000);
+
+            } catch (error) {
+                console.error("GGUF Parse Error:", error);
+                alert("Failed to parse GGUF URL. CORS might be blocking the request, or the file is invalid. Falling back to preset models.");
+                DOM.btnParse.innerHTML = `<i data-lucide="search" class="w-4 h-4"></i> Parse`;
+                lucide.createIcons();
+            }
+        });
+
+        function calculate() {
+            // Inputs
+            const gpuSelected = DOM.gpuSelect.options[DOM.gpuSelect.selectedIndex];
+            const gpuVramGB = parseFloat(gpuSelected.value);
+            const gpuBandwidth = parseFloat(gpuSelected.dataset.bw);
+            
+            const contextLen = parseInt(DOM.contextSlider.value);
+            const cacheBytes = parseFloat(DOM.kvCacheSelect.value);
+            const overheadGB = parseFloat(DOM.runnerSelect.value);
+
+            // Calculations
+            // 1. Weight VRAM: File Size * 1.05
+            const weightVram = modelState.fileSizeGB * 1.05;
+
+            // 2. KV Cache VRAM
+            // Formula: (2 * layers * kv_heads * head_dim * context * cache_bytes) / 1024^3
+            const kvVram = (2 * modelState.layers * modelState.kvHeads * modelState.headDim * contextLen * cacheBytes) / Math.pow(1024, 3);
+
+            // 3. Total Memory
+            const totalRequired = weightVram + kvVram + overheadGB;
+
+            // 4. Decode Speed (tokens/sec)
+            // Formula: (Bandwidth / Model Size) * 0.75
+            let speed = (gpuBandwidth / modelState.fileSizeGB) * 0.75;
+            let isOom = false;
+            let isSpilling = false;
+
+            if (totalRequired > gpuVramGB) {
+                isSpilling = true;
+                // Apply 70% penalty if spilling to system RAM
+                speed = speed * 0.3;
+                // If it exceeds way past typical system RAM + GPU, it's just OOM
+                if (totalRequired > gpuVramGB + 32) {
+                    isOom = true;
+                    speed = 0;
+                }
+            }
+
+            // Update UI Outputs
+            DOM.outWeight.textContent = `${weightVram.toFixed(2)} GB`;
+            DOM.outKv.textContent = `${kvVram.toFixed(2)} GB`;
+            DOM.outOverhead.textContent = `${overheadGB.toFixed(2)} GB`;
+            DOM.outTotal.textContent = `${totalRequired.toFixed(2)} GB`;
+            DOM.outSpeed.textContent = speed > 0 ? speed.toFixed(1) : "0.0";
+            
+            DOM.vramTextDisplay.textContent = `${totalRequired.toFixed(2)} / ${gpuVramGB.toFixed(2)} GB`;
+            
+            let percentage = (totalRequired / gpuVramGB) * 100;
+            DOM.vramPercentage.textContent = `${percentage.toFixed(1)}%`;
+            DOM.vramBar.style.width = `${Math.min(percentage, 100)}%`;
+
+            // Status Colors & Badges
+            DOM.vramBar.className = 'h-full transition-all duration-500 ease-out ';
+            DOM.speedWarning.classList.add('hidden');
+
+            if (isOom) {
+                DOM.vramBar.classList.add('bg-red-600');
+                DOM.statusBadge.className = 'px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 border shadow-lg transition-all duration-300 bg-red-500/10 text-red-400 border-red-500/30';
+                DOM.statusBadge.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> Out of Memory (OOM)`;
+            } else if (isSpilling) {
+                DOM.vramBar.classList.add('bg-yellow-500');
+                DOM.statusBadge.className = 'px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 border shadow-lg transition-all duration-300 bg-yellow-500/10 text-yellow-400 border-yellow-500/30';
+                DOM.statusBadge.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4"></i> Spills to System RAM`;
+                DOM.speedWarning.classList.remove('hidden');
+            } else {
+                if (percentage >= 85) {
+                    DOM.vramBar.classList.add('bg-yellow-400');
+                } else {
+                    DOM.vramBar.classList.add('bg-green-500');
+                }
+                DOM.statusBadge.className = 'px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 border shadow-lg transition-all duration-300 bg-green-500/10 text-green-400 border-green-500/30';
+                DOM.statusBadge.innerHTML = `<div class="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div> 100% GPU VRAM Fit`;
+            }
+
+            lucide.createIcons();
+        }
+
+        // Initial Calculation
+        // Trigger model state init from default selected option
+        const initSelected = DOM.presetModel.options[DOM.presetModel.selectedIndex];
+        modelState.fileSizeGB = parseFloat(DOM.presetModel.value);
+        modelState.layers = parseInt(initSelected.dataset.layers);
+        modelState.kvHeads = parseInt(initSelected.dataset.kvheads);
+        modelState.headDim = parseInt(initSelected.dataset.headdim);
+        
+        calculate();
+
+    </script>
+</body>
+</html>
